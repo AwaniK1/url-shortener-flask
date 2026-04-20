@@ -2,8 +2,12 @@ from flask import Flask, render_template, request
 
 import string
 import random
+from database import create_db
+
+create_db()
 
 app = Flask(__name__)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
