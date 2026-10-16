@@ -1,13 +1,188 @@
+
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>URL Shortener</title>
-    </head>
-    <body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 35px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e293b;
+        }
+
+        p {
+            text-align: center;
+            color: #64748b;
+            overflow-wrap: anywhere;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            margin: 18px 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 22px;
+            padding: 15px;
+            background: #eff6ff;
+            border-radius: 7px;
+            overflow-wrap: anywhere;
+        }
+
+        .result a {
+            color: #2563eb;
+        }
+
+        .copy-btn {
+            margin-top: 12px;
+        }
+
+        .analytics {
+            margin-top: 15px;
+            padding: 12px;
+            background: #dbeafe;
+            border-radius: 7px;
+            text-align: center;
+            color: #1e40af;
+            font-weight: bold;
+        }
+
+        .error {
+            margin-top: 15px;
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 10px;
+            border-radius: 7px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
         <h1>URL Shortener</h1>
-        <form method = 'POST'>
-            <input type = 'text' name = 'original_url' placeholder="Enter your url" required>
-            <button type="submit">Shorten</button>
+        <p>Turn long URLs into short, shareable links.</p>
+
+        <form method="POST" action="/">
+            <input
+                type="text"
+                name="original_url"
+                placeholder="Enter your long URL"
+                required
+            >
+            <input
+    type="text"
+    name="custom_alias"
+    placeholder="Custom alias (optional, e.g. google)"
+>
+            <button type="submit">Shorten URL</button>
         </form>
-    </body>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if short_url %}
+        <div class="result">
+            <strong>Your short URL:</strong>
+
+            <p>
+                <a href="{{ short_url }}" target="_blank"
+                   rel="noopener noreferrer">
+                    {{ short_url }}
+                </a>
+            </p>
+
+            <button
+                class="copy-btn"
+                type="button"
+                onclick="copyLink()">
+                Copy Short URL
+            </button>
+
+            <div class="analytics">
+                Total clicks: <span id="click-count">{{ clicks }}</span>
+            </div>
+        </div>
+
+        <script>
+            const shortUrl = {{ short_url | tojson }};
+            const analyticsUrl = {{ url_for(
+                'analytics',
+                short_code=short_url.rstrip('/').split('/')[-1]
+            ) | tojson }};
+
+            async function copyLink() {
+                try {
+                    await navigator.clipboard.writeText(shortUrl);
+                    alert('Short URL copied!');
+                } catch (error) {
+                    alert('Copy failed. Please copy the link manually.');
+                }
+            }
+
+            async function updateClickCount() {
+                try {
+                    const response = await fetch(analyticsUrl);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('click-count').textContent =
+                            data.clicks;
+                    }
+                } catch (error) {
+                    console.error('Could not update click count:', error);
+                }
+            }
+
+            updateClickCount();
+            setInterval(updateClickCount, 2000);
+        </script>
+        {% endif %}
+    </div>
+</body>
 </html>
